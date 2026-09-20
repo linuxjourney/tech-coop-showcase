@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tech Coop Framework — Homelab-First Infrastructure Showcase</title>
+  <meta name="description" content="A homelab-first technology cooperative platform: self-hosted infrastructure on owned hardware with verified reliability and operational discipline.">
+
+  <!-- Early Theme Setter to Prevent FOUC -->
+  <script>
+    (function() {
+      function getMode() {
+        try { return localStorage.getItem('coop-portfolio-theme') || 'auto'; } catch(e) { return 'auto'; }
+      }
+      function isDaylight() {
+        try {
+          var d = new Date();
+          var lat = 45.0, lng = -d.getTimezoneOffset() / 4;
+          var rad = Math.PI / 180, deg = 180 / Math.PI;
+          var startOfYear = new Date(d.getFullYear(), 0, 1);
+          var dayOfYear = Math.floor((d - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+          var lngHour = lng / 15;
+          function calc(isRise) {
+            var t = dayOfYear + ((isRise ? 6 : 18) - lngHour) / 24;
+            var M = (0.9856 * t) - 3.289;
+            var L = (M + (1.916 * Math.sin(M * rad)) + (0.020 * Math.sin(2 * M * rad)) + 282.634 + 360) % 360;
+            var RA = (deg * Math.atan(0.91764 * Math.tan(L * rad)) + 360) % 360;
+            RA = (RA + Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90) / 15;
+            var sinDec = 0.39782 * Math.sin(L * rad);
+            var cosDec = Math.cos(Math.asin(sinDec));
+            var cosH = (Math.cos(90.833 * rad) - (sinDec * Math.sin(lat * rad))) / (cosDec * Math.cos(lat * rad));
+            if (cosH > 1 || cosH < -1) return null;
+            var H = (isRise ? (360 - deg * Math.acos(cosH)) : (deg * Math.acos(cosH))) / 15;
+            var UT = (H + RA - (0.06571 * t) - 6.622 - lngHour + 48) % 24;
+            var localHours = (UT - d.getTimezoneOffset() / 60 + 24) % 24;
+            var res = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            var h = Math.floor(localHours), m = Math.floor((localHours - h) * 60), s = Math.floor(((localHours - h) * 60 - m) * 60);
+            res.setHours(h, m, s, 0);
+            return res;
+          }
+          var rise = calc(true), set = calc(false);
+          if (!rise || !set) return (d.getHours() >= 7 && d.getHours() < 19);
+          return (d >= rise && d < set);
+        } catch(err) {
+          var hr = new Date().getHours();
+          return (hr >= 7 && hr < 19);
+        }
+      }
+      var mode = getMode();
+      var effective = mode === 'auto' ? (isDaylight() ? 'light' : 'dark') : mode;
+      document.documentElement.setAttribute('data-theme', effective);
+      document.documentElement.setAttribute('data-theme-mode', mode);
+    })();
+  </script>
+
+  <style>
+    :root {
+      /* Light Theme (Default Root) — Warm Unbleached Linen, Limestone & Fired Terracotta */
+      --bg: #f8f5ee;
+      --header-bg: #ede7dc;
+      --card-bg: #ffffff;
+      --card-hover: #faf7f2;
+      --card-inner: #f2ece1;
+      --border: #ded7c6;
+      --border-subtle: #eae4d5;
+      --text: #1c1612;
+      --text-muted: #4a3e32;
+      --text-faint: #55483b;
+      --accent: #9c421d;
+      --accent-hover: #7e3415;
+      --accent-bg: #faede6;
+      --accent-border: #e6b8a2;
+      --focus-ring: rgba(156, 66, 29, 0.3);
+      --chip-active-text: #ffffff;
+      --code-bg: #231d18;
+      --code-border: #3b322a;
+      --code-text: #f6f0e7;
+      --badge-green-color: #174226;
+      --badge-green-bg: #e1efe6;
+      --badge-green-border: #9ecdb3;
+      --badge-amber-color: #593302;
+      --badge-amber-bg: #faeedb;
+      --badge-amber-border: #dfbf88;
+      --elevation: 0 1px 3px rgba(44, 37, 30, 0.08);
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme — Rich Peat Soil, Charred Oak & Terracotta Ember */
+      --bg: #1c1815;
+      --header-bg: #14110f;
+      --card-bg: #27211d;
+      --card-hover: #312a25;
+      --card-inner: #1e1916;
+      --border: #423831;
+      --border-subtle: #2f2722;
+      --text: #f5f0ea;
+      --text-muted: #d8cec3;
+      --text-faint: #beb2a5;
+      --accent: #e28263;
+      --accent-hover: #f09a80;
+      --accent-bg: rgba(226, 130, 99, 0.15);
+      --accent-border: rgba(226, 130, 99, 0.4);
+      --focus-ring: rgba(226, 130, 99, 0.4);
+      --chip-active-text: #1c1815;
+      --code-bg: #110e0c;
+      --code-border: #383029;
+      --code-text: #f5f0ea;
+      --badge-green-color: #a3d9b5;
+      --badge-green-bg: #1a3324;
+      --badge-green-border: #38704d;
+      --badge-amber-color: #fbd693;
+      --badge-amber-bg: #382508;
+      --badge-amber-border: #754f15;
+      --elevation: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      background-color: #f8f5ee;
+      color: #1c1612;
+    }
+    html[data-theme="dark"] {
+      background-color: #1c1815;
+      color: #f5f0ea;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    svg text {
+      fill: var(--text);
+    }
+
+    ::selection {
+      background: var(--accent);
+      color: var(--chip-active-text);
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .brand svg { color: var(--accent); flex-shrink: 0; }
+    .brand-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+    .brand-tag {
+      font-size: 0.75rem;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .hero {
+      padding: 4rem 1.5rem 3rem 1.5rem;
+      background: linear-gradient(180deg, var(--header-bg) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .hero-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--badge-green-bg);
+      color: var(--badge-green-color);
+      border: 1px solid var(--badge-green-border);
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .hero-pill .dot {
+      width: 8px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+    }
+    .hero p.lead {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 760px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      text-align: center;
+      color: var(--text);
+      box-shadow: var(--elevation);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .view-switcher-bar {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 68px;
+      z-index: 40;
+    }
+    .switcher-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .switcher-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+    .tabs {
+      display: flex;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text);
+    }
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .section-header {
+      margin-bottom: 2rem;
+    }
+    .section-tag {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .section-title {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+    }
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 780px;
+      line-height: 1.6;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      color: var(--text);
+      box-shadow: var(--elevation);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .card-top { margin-bottom: 1.25rem; }
+    .card-heading-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-heading-icon {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .card-meta {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 1rem;
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-faint);
+    }
+
+    .diagram-wrapper {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 3.5rem;
+      box-shadow: var(--elevation);
+    }
+    .diagram-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .diagram-node {
+      cursor: pointer;
+      transition: opacity 0.2s, filter 0.2s;
+    }
+    .diagram-node:hover {
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+
+    .health-matrix {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 3.5rem;
+      box-shadow: var(--elevation);
+    }
+    .health-header {
+      background: var(--header-bg);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .health-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--badge-green-color);
+      background: var(--badge-green-bg);
+      border: 1px solid var(--badge-green-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+    }
+    .health-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border-subtle);
+    }
+    .health-item {
+      background: var(--card-bg);
+      padding: 1rem 1.25rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+    .health-item:hover {
+      background: var(--card-hover);
+    }
+    .health-check-icon {
+      color: var(--badge-green-color);
+      flex-shrink: 0;
+    }
+
+    .postmortem-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 2rem;
+      margin-bottom: 3.5rem;
+      color: var(--text);
+      box-shadow: var(--elevation);
+    }
+    .postmortem-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .postmortem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .postmortem-box {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      color: var(--text);
+    }
+    .postmortem-box h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .postmortem-box p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 3.5rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      box-shadow: var(--elevation);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    th, td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--header-bg);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.03em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--card-inner); }
+
+    footer {
+      background: var(--header-bg);
+      border-top: 1px solid var(--border);
+      padding: 3rem 1.5rem;
+      text-align: center;
+      margin-top: auto;
+    }
+    .footer-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-copy {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+    }
+
+    @media print {
+      header, .view-switcher-bar, .theme-toggle, .btn, footer { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+      .tab-content { display: block !important; margin-bottom: 2rem; }
+      .card, .postmortem-card, .diagram-wrapper { border: 1px solid #ccc !important; box-shadow: none !important; }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .hero { padding: 2.5rem 1rem; }
+      .view-switcher-bar { position: static; }
+      .switcher-container { flex-direction: column; align-items: stretch; }
+      .tabs { width: 100%; justify-content: stretch; }
+      .tab-btn { flex: 1; justify-content: center; font-size: 0.8rem; padding: 0.5rem; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <a href="#" class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span class="brand-title">Tech Coop Framework</span>
+        <span class="brand-tag">Homelab Pilot</span>
+      </a>
+
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="theme-toggle" type="button" onclick="CoopPortfolioTheme.cycle()" aria-label="Toggle solar light/dark theme">☀️ Auto</button>
+        <button class="btn" type="button" onclick="copyShareSummary()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          <span id="copy-btn-text">Copy Summary</span>
+        </button>
+        <a href="https://github.com/linuxjourney/tech-coop-showcase" target="_blank" rel="noopener" class="btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="javascript:window.print()" class="btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Export PDF
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-pill">
+        <span class="dot"></span> Production Foundation • Live &amp; Verified on core-node
+      </div>
+      <h1>Human-Scale Tech Sovereignty on Owned Hardware</h1>
+      <p class="lead">
+        A working technology cooperative platform engineered with homelab-first simplicity, Active Directory identity, verified restic backups, and strict operational discipline.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">19 / 19</div>
+          <div class="stat-label">Automated Health Checks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">0 Node.js</div>
+          <div class="stat-label">Production Runtime Overhead</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">~2,000</div>
+          <div class="stat-label">Append-Only Ops Log Lines</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Physical Hardware Sovereignty</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="view-switcher-bar">
+    <div class="switcher-container">
+      <span class="switcher-label">Select Perspective:</span>
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" onclick="switchView('stakeholder')" id="tab-stakeholder" role="tab" aria-selected="true">
+          Cooperative &amp; Stakeholder
+        </button>
+        <button class="tab-btn" onclick="switchView('technical')" id="tab-technical" role="tab" aria-selected="false">
+          Systems &amp; Architecture
+        </button>
+        <button class="tab-btn" onclick="switchView('reliability')" id="tab-reliability" role="tab" aria-selected="false">
+          Reliability &amp; Operations
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div id="view-stakeholder" class="tab-content active" role="tabpanel">
+      <div class="section-header">
+        <span class="section-tag">Cooperative Strategy &amp; Governance</span>
+        <h2 class="section-title">Why Homelab-First Cooperative Infrastructure?</h2>
+        <p class="section-desc">
+          Modern cloud infrastructure traps community organizations in expensive recurring SaaS fees, vendor lock-in, and opaque data governance. The Tech Coop Framework proves that small communities can own, govern, and run their own resilient digital services on affordable local hardware.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-top">
+            <div class="card-heading-row">
+              <svg class="card-heading-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <h3 class="card-title">Absolute Data Sovereignty</h3>
+            </div>
+            <p class="card-desc">
+              Member files, identities, and credentials never touch commercial third-party cloud servers. Data resides on owned physical NVMe storage with monthly offline air-gapped backups.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>POSIX 0700 Isolation</span>
+            <span>Zero SaaS Dependence</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <div class="card-heading-row">
+              <svg class="card-heading-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8l-8 8"></path><path d="M8 8l8 8"></path></svg>
+              <h3 class="card-title">Rejecting SaaS Extravagance</h3>
+            </div>
+            <p class="card-desc">
+              Replaces thousands of dollars in annual Google Workspace, Microsoft 365, and Dropbox subscriptions with a single refurbished mini-PC server running open-source standards.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>Low Power Usage</span>
+            <span>Zero Ongoing Licensing</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <div class="card-heading-row">
+              <svg class="card-heading-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <h3 class="card-title">Steward-Friendly Continuity</h3>
+            </div>
+            <p class="card-desc">
+              Designed using the "Both Chairs" framework: weighing member convenience equally with steward maintenance toil. Written runbooks ensure any cooperative member can step in as administrator.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>Runbook-First Policy</span>
+            <span>Simple Reconciliation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top: 4rem;">
+        <span class="section-tag">Case Study in Systems Thinking</span>
+        <h2 class="section-title">The Architectural Reboot: Salvage, Wipe, Rebuild</h2>
+        <p class="section-desc">
+          Before building the current resilient stack, an earlier prototype collapsed under the weight of premature abstraction. Here is how rigorous engineering discipline turned failure into durable success.
+        </p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Earlier Prototype (v0 Collapse)</th>
+              <th>Rebuilt Architecture (v1 Production)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Scoping Method</strong></td>
+              <td>11 pre-declared theoretical IT departments with 30 interlocking specifications before any real user existed.</td>
+              <td><strong>Discovered from working needs.</strong> No abstract taxonomy; every service justified by real member demand.</td>
+            </tr>
+            <tr>
+              <td><strong>Stack &amp; Runtime</strong></td>
+              <td>Turborepo monorepo, pnpm, React, Vite, Hono API, heavy containerized OIDC orchestrations.</td>
+              <td><strong>Pure Go static binaries (`CGO_ENABLED=0`)</strong>, vendored vanilla htmx, zero runtime Node.js overhead.</td>
+            </tr>
+            <tr>
+              <td><strong>Validation Milestone</strong></td>
+              <td>Unresolved governance and legal entity definitions blocked basic software progress.</td>
+              <td><strong>The First Real Transaction:</strong> A second real member (`member.one`) authenticating and storing private files.</td>
+            </tr>
+            <tr>
+              <td><strong>Documentation</strong></td>
+              <td>Uniform ceremonial paperwork applied identically to trivial and irreversible choices alike.</td>
+              <td><strong>Runbook-first (Rule 5):</strong> Human written steps before automation; ADRs reserved only for irreversible choices.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-technical" class="tab-content" role="tabpanel">
+      <div class="section-header">
+        <span class="section-tag">Infrastructure Deep Dive</span>
+        <h2 class="section-title">Production Topology &amp; Component Map</h2>
+        <p class="section-desc">
+          Every component on `core-node` serves a distinct, least-privilege role. Below is the network and service routing architecture.
+        </p>
+      </div>
+
+      <div class="diagram-wrapper">
+        <svg class="diagram-svg" viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg">
+          <rect x="30" y="40" width="220" height="400" rx="10" fill="var(--card-bg)" stroke="var(--border)" stroke-width="1.5" />
+          <text x="140" y="75" fill="var(--accent)" font-weight="700" font-size="14" text-anchor="middle">TRUSTED LAN CLIENTS</text>
+          <text x="140" y="98" fill="var(--text-muted)" font-size="12" text-anchor="middle">10.0.0.0 / 24 Subnet</text>
+
+          <g class="diagram-node">
+            <rect x="50" y="125" width="180" height="70" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="140" y="155" fill="var(--text)" font-weight="600" font-size="13" text-anchor="middle">Member Workstations</text>
+            <text x="140" y="175" fill="var(--text-muted)" font-size="12" text-anchor="middle">macOS / Windows / Linux</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="50" y="215" width="180" height="70" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="140" y="245" fill="var(--text)" font-weight="600" font-size="13" text-anchor="middle">Mobile Devices</text>
+            <text x="140" y="265" fill="var(--text-muted)" font-size="12" text-anchor="middle">iOS &amp; Android Browsers</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="50" y="305" width="180" height="70" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="140" y="335" fill="var(--text)" font-weight="600" font-size="13" text-anchor="middle">Steward Console</text>
+            <text x="140" y="355" fill="var(--text-muted)" font-size="12" text-anchor="middle">Admin UI &amp; Terminal SSH</text>
+          </g>
+
+          <rect x="300" y="40" width="370" height="400" rx="10" fill="var(--card-bg)" stroke="var(--border)" stroke-width="1.5" />
+          <text x="485" y="75" fill="var(--accent)" font-weight="700" font-size="14" text-anchor="middle">CORE-NODE (10.0.0.10)</text>
+          <text x="485" y="98" fill="var(--text-muted)" font-size="12" text-anchor="middle">x86-64 Mini-PC • Linux OS</text>
+
+          <g class="diagram-node">
+            <rect x="320" y="125" width="330" height="60" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="485" y="150" fill="var(--text)" font-weight="600" font-size="13" text-anchor="middle">Edge Caddy Reverse Proxy (:443)</text>
+            <text x="485" y="168" fill="var(--text-muted)" font-size="12" text-anchor="middle">TLS Termination • Internal CA • Route Isolation</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="320" y="200" width="160" height="65" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="400" y="225" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Samba4 AD DC</text>
+            <text x="400" y="245" fill="var(--text-muted)" font-size="12" text-anchor="middle">DNS :53 • Kerberos :88</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="490" y="200" width="160" height="65" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="570" y="225" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Blocky DNS :5335</text>
+            <text x="570" y="245" fill="var(--text-muted)" font-size="12" text-anchor="middle">DoT to Quad9 • Ad Filter</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="320" y="280" width="160" height="65" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="400" y="305" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">SMB Shares (:445)</text>
+            <text x="400" y="325" fill="var(--text-muted)" font-size="12" text-anchor="middle">/srv/share (Mode 0700)</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="490" y="280" width="160" height="65" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="570" y="305" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Guacamole (:8080)</text>
+            <text x="570" y="325" fill="var(--text-muted)" font-size="12" text-anchor="middle">HTML5 RDP to RSAT VM</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="320" y="360" width="330" height="65" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="485" y="385" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Coop Library (:9095) &amp; Blocky UI (:9090)</text>
+            <text x="485" y="405" fill="var(--text-muted)" font-size="12" text-anchor="middle">Pure Go Daemons • CommonMark • Solar Theming</text>
+          </g>
+
+          <rect x="720" y="40" width="250" height="400" rx="10" fill="var(--card-bg)" stroke="var(--border)" stroke-width="1.5" />
+          <text x="845" y="75" fill="var(--accent)" font-weight="700" font-size="14" text-anchor="middle">RECOVERY &amp; STORAGE</text>
+          <text x="845" y="98" fill="var(--text-muted)" font-size="12" text-anchor="middle">Disaster Recovery Pipeline</text>
+
+          <g class="diagram-node">
+            <rect x="745" y="125" width="200" height="75" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="845" y="155" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Restic Engine</text>
+            <text x="845" y="175" fill="var(--text-muted)" font-size="12" text-anchor="middle">Encrypted Snapshots</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="745" y="220" width="200" height="75" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="845" y="250" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Monthly Offline Custody</text>
+            <text x="845" y="270" fill="var(--text-muted)" font-size="12" text-anchor="middle">Physical External Air-Gap Drive</text>
+          </g>
+
+          <g class="diagram-node">
+            <rect x="745" y="315" width="200" height="75" rx="8" fill="var(--card-inner)" stroke="var(--border)" />
+            <text x="845" y="345" fill="var(--text)" font-weight="600" font-size="12" text-anchor="middle">Verified Restore Bridge</text>
+            <text x="845" y="365" fill="var(--text-muted)" font-size="12" text-anchor="middle">Tested in Isolated LXD Bridge</text>
+          </g>
+
+          <path d="M 230 160 L 320 155" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 2" />
+          <path d="M 230 250 L 320 155" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 2" />
+          <path d="M 230 340 L 320 155" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 2" />
+          <path d="M 230 170 L 320 230" stroke="var(--border)" stroke-width="1.5" />
+          <path d="M 230 180 L 320 310" stroke="var(--border)" stroke-width="1.5" />
+          <path d="M 650 310 L 745 160" stroke="var(--accent)" stroke-width="2" />
+          <path d="M 845 200 L 845 220" stroke="var(--border)" stroke-width="2" />
+        </svg>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-top">
+            <h3 class="card-title">Identity &amp; Access (Samba4 AD DC)</h3>
+            <p class="card-desc">
+              Full Kerberos and LDAP implementation running in Samba Active Directory mode on the `COOP.INTERNAL` realm. Provides enterprise identity management and POSIX ACL mapping without external cloud brokers.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>Ports: 53, 88, 389, 445, 636</span>
+            <span>Delegated `svc-lam` Account</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <h3 class="card-title">Storage Isolation (POSIX DAC)</h3>
+            <p class="card-desc">
+              Individual member home directories at `/srv/share/{username}` are set to mode `0700` (`drwx------`) strictly owned by individual member UIDs. Cross-member access is rejected at the Linux kernel DAC layer.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>Kernel DAC Enforcement</span>
+            <span>Zero Cross-Member Leaks</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <h3 class="card-title">Bespoke Go/HTMX Microservices</h3>
+            <p class="card-desc">
+              All custom services (`blocky-ui` and `coop-library`) are statically compiled pure Go binaries (`CGO_ENABLED=0`) with vendored vanilla htmx. Self-contained, crash-resilient, and running as non-root systemd daemons.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>CommonMark/GFM Engine</span>
+            <span>Astronomical Solar Timer</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <h3 class="card-title">Hardened Administration Gateway</h3>
+            <p class="card-desc">
+              Apache Guacamole HTML5 gateway proxies browser connections into an isolated Windows RSAT VM with native clipboard forwarding and pinned TLS certificates, enabling full Active Directory GUI management from any machine.
+            </p>
+          </div>
+          <div class="card-meta">
+            <span>Full RSAT Tooling</span>
+            <span>Pinned TLS Fingerprints</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-reliability" class="tab-content" role="tabpanel">
+      <div class="section-header">
+        <span class="section-tag">Verification &amp; Incident Readiness</span>
+        <h2 class="section-title">Automated Verification &amp; Ops Discipline</h2>
+        <p class="section-desc">
+          Per Rebuild Brief Rule 9, no service is "done" until it can be installed, backed up, restored, monitored with a health signal, and recovered from failure. Here is the evidence.
+        </p>
+      </div>
+
+      <div class="health-matrix">
+        <div class="health-header">
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text);">Automated Health Check Harness (`health-check.sh`)</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Executed continuously and on every systemd boot</p>
+          </div>
+          <div class="health-status-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            17 / 17 Passing
+          </div>
+        </div>
+
+        <div class="health-list">
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>samba-ad-dc is active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>smbd disabled (no port collision)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Port 53 listening (DNS)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Port 88 listening (Kerberos)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Port 389 listening (LDAP)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Port 445 listening (SMB)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Port 636 listening (LDAPS)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>samba-tool dbcheck (0 errors)</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Internal DNS resolves domain</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>External DNS forwarder active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Blocky daemon active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Ad filtering sinkhole verified</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>/srv disk capacity &lt; 90%</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>/var/backups capacity &lt; 90%</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>UFW host firewall active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>coop-library service active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>coop-library health API ok</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>coop-media service active</span>
+          </div>
+          <div class="health-item">
+            <svg class="health-check-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>coop-media health API ok</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="postmortem-card">
+        <div class="section-tag">Real-World Engineering Maturity</div>
+        <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem;">
+          Security Postmortem: Unauthenticated Share Exposure Remediation
+        </h3>
+        <div class="postmortem-meta">
+          <span><strong>Date:</strong> 2026-09-19</span>
+          <span>•</span>
+          <span><strong>Severity:</strong> High (Contained in &lt;15 minutes)</span>
+          <span>•</span>
+          <span><strong>Root Cause:</strong> Linux Capability DAC Bypass</span>
+        </div>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">
+          During initial staging of the Coop Library viewer, private photos from an individual member's personal share were visible over unauthenticated LAN HTTP. The engineering team executed an immediate, blameless postmortem:
+        </p>
+
+        <div class="postmortem-grid">
+          <div class="postmortem-box">
+            <h4>1. Root Cause Identification</h4>
+            <p>
+              To allow the unprivileged daemon user to index operational runbooks, `CAP_DAC_READ_SEARCH` was granted in the systemd unit. Combined with an overbroad `SHARE_ROOT=/srv/share`, this bypassed Linux POSIX `0700` DAC permissions.
+            </p>
+          </div>
+          <div class="postmortem-box">
+            <h4>2. Rapid Containment</h4>
+            <p>
+              Immediately stripped `SHARE_ROOT` and revoked all Linux capabilities from the systemd unit. Scoped the filesystem read boundary strictly to `/opt/coop-docs`. Restarted the service within minutes.
+            </p>
+          </div>
+          <div class="postmortem-box">
+            <h4>3. Codebase Hardening</h4>
+            <p>
+              Hardcoded a security refusal in Go rejecting multi-user parent roots (`/srv/share`). Added regression tests in `main_test.go` and codified the rule in `docs/patterns.md` to prevent any unauthenticated daemon from bypassing DAC.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="https://github.com/linuxjourney/tech-coop-showcase" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="README.md" target="_blank">Technical Case Study (Markdown)</a>
+        <a href="docs/rebuild-brief.md" target="_blank">Rebuild Brief</a>
+        <a href="docs/patterns.md" target="_blank">Architecture Patterns</a>
+      </div>
+      <p class="footer-copy">
+        Tech Coop Framework • Homelab-First Cooperative Infrastructure • Single-Node Production Prototype
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function switchView(tabKey) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(view => view.classList.remove('active'));
+      
+      const targetBtn = document.getElementById('tab-' + tabKey);
+      const targetView = document.getElementById('view-' + tabKey);
+      if (targetBtn && targetView) {
+        targetBtn.classList.add('active');
+        targetView.classList.add('active');
+      }
+    }
+
+    function copyShareSummary() {
+      const summaryText = "Tech Coop Framework: A homelab-first technology cooperative platform proving digital sovereignty on owned hardware. Running Samba4 Active Directory, Kerberos, Restic backups, Blocky DNS filtering, and pure-Go utilities with 19/19 automated health checks passing continuously. Check out the portfolio: https://linuxjourney.github.io/tech-coop-showcase/";
+      navigator.clipboard.writeText(summaryText).then(() => {
+        const btnText = document.getElementById('copy-btn-text');
+        const orig = btnText.innerText;
+        btnText.innerText = "Copied to Clipboard!";
+        setTimeout(() => { btnText.innerText = orig; }, 2500);
+      }).catch(err => {
+        alert("Summary copied: " + summaryText);
+      });
+    }
+
+    window.CoopPortfolioTheme = (function() {
+      var timer = null;
+      function getStoredMode() {
+        try { return localStorage.getItem('coop-portfolio-theme') || 'auto'; } catch (e) { return 'auto'; }
+      }
+      function setStoredMode(m) {
+        try { localStorage.setItem('coop-portfolio-theme', m); } catch (e) {}
+      }
+      function getSolarTimes(date) {
+        var d = date || new Date();
+        var lat = 45.0, lng = -d.getTimezoneOffset() / 4;
+        var rad = Math.PI / 180, deg = 180 / Math.PI;
+        var startOfYear = new Date(d.getFullYear(), 0, 1);
+        var dayOfYear = Math.floor((d - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+        var lngHour = lng / 15;
+        function calc(isRise, dayOffset) {
+          var doy = dayOfYear + (dayOffset || 0);
+          var t = doy + ((isRise ? 6 : 18) - lngHour) / 24;
+          var M = (0.9856 * t) - 3.289;
+          var L = (M + (1.916 * Math.sin(M * rad)) + (0.020 * Math.sin(2 * M * rad)) + 282.634 + 360) % 360;
+          var RA = (deg * Math.atan(0.91764 * Math.tan(L * rad)) + 360) % 360;
+          RA = (RA + Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90) / 15;
+          var sinDec = 0.39782 * Math.sin(L * rad);
+          var cosDec = Math.cos(Math.asin(sinDec));
+          var cosH = (Math.cos(90.833 * rad) - (sinDec * Math.sin(lat * rad))) / (cosDec * Math.cos(lat * rad));
+          if (cosH > 1 || cosH < -1) return null;
+          var H = (isRise ? (360 - deg * Math.acos(cosH)) : (deg * Math.acos(cosH))) / 15;
+          var UT = (H + RA - (0.06571 * t) - 6.622 - lngHour + 48) % 24;
+          var localHours = (UT - d.getTimezoneOffset() / 60 + 24) % 24;
+          var res = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (dayOffset || 0));
+          var h = Math.floor(localHours), m = Math.floor((localHours - h) * 60), s = Math.floor(((localHours - h) * 60 - m) * 60);
+          res.setHours(h, m, s, 0);
+          return res;
+        }
+        var sunrise = calc(true, 0);
+        var sunset = calc(false, 0);
+        var nextSunrise = calc(true, 1);
+        var isDay = (sunrise && sunset) ? (d >= sunrise && d < sunset) : (d.getHours() >= 7 && d.getHours() < 19);
+        return { sunrise: sunrise, sunset: sunset, nextSunrise: nextSunrise, isDay: isDay };
+      }
+
+      function formatTime(d) {
+        if (!d) return '--:--';
+        return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+
+      function updateUI() {
+        var mode = getStoredMode();
+        var now = new Date();
+        var solar = getSolarTimes(now);
+        var effectiveTheme = mode === 'auto' ? (solar.isDay ? 'light' : 'dark') : mode;
+
+        document.documentElement.setAttribute('data-theme', effectiveTheme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+
+        var btn = document.getElementById('theme-toggle-btn');
+        if (btn) {
+          var label = '';
+          var title = '';
+          var riseStr = formatTime(solar.sunrise);
+          var setStr = formatTime(solar.sunset);
+
+          if (mode === 'auto') {
+            if (solar.isDay) {
+              label = '☀️ Auto (Day)';
+              title = 'Solar schedule: Sunset at ' + setStr + '. Click to switch to Light mode.';
+            } else {
+              label = '🌙 Auto (Night)';
+              title = 'Solar schedule: Sunrise at ' + riseStr + '. Click to switch to Light mode.';
+            }
+          } else if (mode === 'light') {
+            label = '☀️ Light';
+            title = 'Manual Light mode. Click to switch to Dark mode.';
+          } else {
+            label = '🌙 Dark';
+            title = 'Manual Dark mode. Click to switch to Auto (Solar) mode.';
+          }
+          btn.innerHTML = label;
+          btn.setAttribute('title', title);
+        }
+
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (mode === 'auto') {
+          var nextEvent = solar.isDay ? solar.sunset : (now < solar.sunrise ? solar.sunrise : solar.nextSunrise);
+          if (nextEvent) {
+            var msUntil = Math.max(1000, nextEvent.getTime() - now.getTime() + 1000);
+            if (msUntil < 86400000) {
+              timer = setTimeout(function() { updateUI(); }, msUntil);
+            }
+          }
+        }
+      }
+
+      function cycleMode() {
+        var current = getStoredMode();
+        var next = current === 'auto' ? 'light' : (current === 'light' ? 'dark' : 'auto');
+        setStoredMode(next);
+        updateUI();
+      }
+
+      document.addEventListener('visibilitychange', function() { if (!document.hidden) updateUI(); });
+      window.addEventListener('focus', function() { updateUI(); });
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateUI);
+      } else {
+        updateUI();
+      }
+
+      return { cycle: cycleMode, update: updateUI };
+    })();
+  </script>
+</body>
+</html>
